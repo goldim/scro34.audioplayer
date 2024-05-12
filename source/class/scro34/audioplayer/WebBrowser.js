@@ -23,6 +23,7 @@ qx.Class.define("scro34.audioplayer.WebBrowser", {
   construct() {
     super();
     this.setCaption("Web Browser");
+    this.__history = [];
   },
 
   /*
@@ -46,10 +47,18 @@ qx.Class.define("scro34.audioplayer.WebBrowser", {
       });
 
       var toolbar = this._createToolbar();
-      this.iframe = new qx.ui.embed.ThemedIframe().set({
-        scrollbarY: "on",
-        scrollbarX: "on",
-      });
+      this.iframe = new qx.ui.embed.Iframe()
+      this.iframe.addListener("load", function(e){
+        console.log(this.iframe.getContentElement().getDocument());
+        // const uri = qx.util.Uri.parseUri(this.iframe.getSource());
+        // console.log(uri.source);
+        // this.__history.push(uri);
+        // this.txtUrl.setValue(uri.source);
+      }, this);
+      // .set({
+      //   scrollbarY: "on",
+      //   scrollbarX: "on",
+      // });
 
       this.add(toolbar);
       this.add(this.iframe, { flex: 1 });
@@ -64,7 +73,9 @@ qx.Class.define("scro34.audioplayer.WebBrowser", {
         "WEB_BROWSER_PREVIOUS"
       );
       btnBack.addListener("execute", (e) => {
-        // this.iframe.getWindow().history.back();
+        this.__history.pop();
+        const link = this.__history.pop();
+        this.surfTo(link.source);
       });
       toolbar.add(btnBack);
       var btnForward = new scro34.audioplayer.toolbar.Button(
@@ -86,6 +97,15 @@ qx.Class.define("scro34.audioplayer.WebBrowser", {
       });
       this.txtUrl.addListener("keypress", (e) => {
         if (e.getKeyIdentifier() == "Enter") {
+          const newUrl = this.txtUrl.getValue();
+          const newUri = qx.util.Uri.parseUri(newUrl);
+
+          const current = this.__history.pop();
+          if (current.host !== newUri.host || current.protocol !== newUri.protocol){
+            this.remove(this.iframe);
+            this.iframe = new qx.ui.embed.Iframe()
+            this.add(this.iframe, { flex: 1 });
+          }
           this.surfTo(this.txtUrl.getValue());
         }
       });
@@ -103,11 +123,12 @@ qx.Class.define("scro34.audioplayer.WebBrowser", {
     },
 
     surfTo(url) {
-      var hasHttp = url.indexOf("http://") === 0;
-      var hasHttps = url.indexOf("https://") === 0;
-      if (!hasHttp && !hasHttps) {
+      const uri = qx.util.Uri.parseUri(url);
+      var hasHttp = ["http", "https"].includes(uri.protocol);
+      if (!hasHttp) {
         url = "https://" + url;
       }
+      this.__history.push(uri);
       this.txtUrl.setValue(url);
       this.iframe.setSource(url);
     },
