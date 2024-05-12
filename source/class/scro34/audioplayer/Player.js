@@ -19,9 +19,6 @@
 
 ************************************************************************ */
 
-/**
- * @asset(scro34/themedemo/playlist.json)
- */
 qx.Class.define("scro34.audioplayer.Player", {
   extend: qx.ui.window.Window,
   include: [scro34.audioplayer.MLinks],
